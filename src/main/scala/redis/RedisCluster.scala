@@ -2,20 +2,18 @@ package redis
 
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import redis.RediscalaCompat.actor.ActorRef
 import redis.RediscalaCompat.actor.ActorSystem
 import redis.RediscalaCompat.event.Logging
-import redis.RediscalaCompat.util.ByteString
 import redis.api.clusters.ClusterNode
 import redis.api.clusters.ClusterSlot
 import redis.protocol.RedisReply
-import redis.util.CRC16
-import scala.concurrent.duration.Duration
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.Promise
+import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
 
 case class RedisCluster(redisServers: Seq[RedisServer], name: String = "RedisClientPool")(implicit
@@ -101,7 +99,7 @@ case class RedisCluster(redisServers: Seq[RedisServer], name: String = "RedisCli
     }
   }
 
-  protected def send[T](redisConnection: ActorRef, redisCommand: RedisCommand[_ <: RedisReply, T]): Future[T] = {
+  protected def send[T](redisConnection: ActorRef, redisCommand: RedisCommand[? <: RedisReply, T]): Future[T] = {
     val promise = Promise[T]()
     redisConnection ! Operation(redisCommand, promise)
     promise.future
@@ -125,7 +123,7 @@ case class RedisCluster(redisServers: Seq[RedisServer], name: String = "RedisCli
   }
 
   val redirectMessagePattern = """(MOVED|ASK) \d+ (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)""".r
-  override def send[T](redisCommand: RedisCommand[_ <: RedisReply, T]): Future[T] = {
+  override def send[T](redisCommand: RedisCommand[? <: RedisReply, T]): Future[T] = {
 
     val maybeRedisActor: Option[ActorRef] = getRedisActor(redisCommand)
 
@@ -158,7 +156,7 @@ case class RedisCluster(redisServers: Seq[RedisServer], name: String = "RedisCli
     }.getOrElse(Future.failed(new RuntimeException("server not found: no server available")))
   }
 
-  def getRedisActor[T](redisCommand: RedisCommand[_ <: RedisReply, T]): Option[ActorRef] = {
+  def getRedisActor[T](redisCommand: RedisCommand[? <: RedisReply, T]): Option[ActorRef] = {
     redisCommand match {
       case clusterKey: ClusterKey =>
         getRedisConnection(clusterKey.getSlot()).filter { _.active.get }.map(_.actor)
@@ -185,45 +183,4 @@ case class RedisCluster(redisServers: Seq[RedisServer], name: String = "RedisCli
   }
 
   Await.result(asyncRefreshClusterSlots(force = true), Duration(10, TimeUnit.SECONDS))
-}
-
-object RedisComputeSlot {
-  val MAX_SLOTS = 16384
-
-  def hashSlot(key: String) = {
-    val indexBegin = key.indexOf("{")
-    val keytag = if (indexBegin != -1) {
-      val indexEnd = key.indexOf("}", indexBegin)
-      if (indexEnd != -1) {
-        key.substring(indexBegin + 1, indexEnd)
-      } else {
-        key
-      }
-    } else {
-      key
-    }
-    CRC16.crc16(keytag) % MAX_SLOTS
-  }
-
-}
-
-trait ClusterKey {
-  def getSlot(): Int
-}
-
-object MultiClusterKey {
-  def getHeadSlot[K](redisKey: ByteStringSerializer[K], keys: Seq[K]): Int = {
-    RedisComputeSlot.hashSlot(redisKey.serialize(keys.headOption.getOrElse(throw new RuntimeException("operation has not keys"))).utf8String)
-  }
-}
-
-abstract class SimpleClusterKey[K](implicit redisKey: ByteStringSerializer[K]) extends ClusterKey {
-  val key: K
-  val keyAsString: ByteString = redisKey.serialize(key)
-  def getSlot(): Int = RedisComputeSlot.hashSlot(keyAsString.utf8String)
-}
-
-abstract class MultiClusterKey[K](implicit redisKey: ByteStringSerializer[K]) extends ClusterKey {
-  val keys: Seq[K]
-  def getSlot(): Int = MultiClusterKey.getHeadSlot(redisKey, keys)
 }

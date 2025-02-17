@@ -1,23 +1,23 @@
 package redis.actors
 
 import java.net.InetSocketAddress
-import redis.RediscalaCompat.actor._
-import redis.RediscalaTestCompat.testkit._
-import redis.RediscalaCompat.util.ByteString
 import org.scalatest.wordspec.AnyWordSpecLike
-import redis.api.connection.Ping
-import redis.api.strings.Get
 import redis.Operation
 import redis.Redis
+import redis.RediscalaCompat.actor.*
+import redis.RediscalaCompat.util.ByteString
+import redis.RediscalaTestCompat.testkit.*
+import redis.api.connection.Ping
+import redis.api.strings.Get
 import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.Promise
 
 class RedisClientActorSpec extends TestKit(ActorSystem()) with AnyWordSpecLike with ImplicitSender {
 
-  import scala.concurrent.duration._
+  import scala.concurrent.duration.*
 
-  val getConnectOperations: () => Seq[Operation[_, _]] = () => {
+  val getConnectOperations: () => Seq[Operation[?, ?]] = () => {
     Seq()
   }
 
@@ -37,7 +37,7 @@ class RedisClientActorSpec extends TestKit(ActorSystem()) with AnyWordSpecLike w
       val getCmd = Get("key")
       val opConnectGet = Operation(getCmd, promiseConnect2)
 
-      val getConnectOperations: () => Seq[Operation[_, _]] = () => {
+      val getConnectOperations: () => Seq[Operation[?, ?]] = () => {
         Seq(opConnectPing, opConnectGet)
       }
 
@@ -139,7 +139,7 @@ class RedisClientActorSpec extends TestKit(ActorSystem()) with AnyWordSpecLike w
 class RedisClientActorMock(
   probeReplyDecoder: ActorRef,
   probeMock: ActorRef,
-  getConnectOperations: () => Seq[Operation[_, _]],
+  getConnectOperations: () => Seq[Operation[?, ?]],
   onConnectStatus: Boolean => Unit
 ) extends RedisClientActor(new InetSocketAddress("localhost", 6379), getConnectOperations, onConnectStatus, Redis.dispatcher.name) {
   override def initRepliesDecoder() = probeReplyDecoder

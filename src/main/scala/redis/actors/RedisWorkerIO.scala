@@ -1,20 +1,20 @@
 package redis.actors
 
+import java.net.InetSocketAddress
+import redis.RediscalaCompat.actor.Actor
 import redis.RediscalaCompat.actor.ActorLogging
 import redis.RediscalaCompat.actor.ActorRef
-import redis.RediscalaCompat.actor.Actor
-import redis.RediscalaCompat.io.Tcp
-import redis.RediscalaCompat.util.ByteStringBuilder
-import redis.RediscalaCompat.util.ByteString
-import java.net.InetSocketAddress
-import redis.RediscalaCompat.io.Tcp._
-import redis.RediscalaCompat.io.Tcp.Connected
-import redis.RediscalaCompat.io.Tcp.Register
-import redis.RediscalaCompat.io.Tcp.Connect
-import redis.RediscalaCompat.io.Tcp.CommandFailed
-import redis.RediscalaCompat.io.Tcp.Received
 import redis.RediscalaCompat.io.IO
-import scala.concurrent.duration.FiniteDuration
+import redis.RediscalaCompat.io.Tcp
+import redis.RediscalaCompat.io.Tcp.*
+import redis.RediscalaCompat.io.Tcp.CommandFailed
+import redis.RediscalaCompat.io.Tcp.Connect
+import redis.RediscalaCompat.io.Tcp.Connected
+import redis.RediscalaCompat.io.Tcp.Received
+import redis.RediscalaCompat.io.Tcp.Register
+import redis.RediscalaCompat.util.ByteString
+import redis.RediscalaCompat.util.ByteStringBuilder
+import scala.concurrent.duration.*
 
 abstract class RedisWorkerIO(val address: InetSocketAddress, onConnectStatus: Boolean => Unit, connectTimeout: Option[FiniteDuration] = None)
     extends Actor
@@ -22,18 +22,16 @@ abstract class RedisWorkerIO(val address: InetSocketAddress, onConnectStatus: Bo
 
   private var currAddress = address
 
-  import context._
-  import scala.concurrent.duration.DurationInt
-  import scala.concurrent.duration.FiniteDuration
+  import context.*
 
-  val tcp = IO(Tcp)(context.system)
+  val tcp: ActorRef = IO(Tcp)(using context.system)
 
   // todo watch tcpWorker
-  var tcpWorker: ActorRef = null
+  private var tcpWorker: ActorRef = null
 
   val bufferWrite: ByteStringBuilder = new ByteStringBuilder
 
-  var readyToWrite = false
+  private var readyToWrite = false
 
   override def preStart(): Unit = {
     if (tcpWorker != null) {
@@ -45,7 +43,7 @@ abstract class RedisWorkerIO(val address: InetSocketAddress, onConnectStatus: Bo
     tcp ! Connect(remoteAddress = currAddress, options = SO.KeepAlive(on = true) :: Nil, timeout = connectTimeout)
   }
 
-  def reconnect() = {
+  def reconnect(): Unit = {
     become(receive)
     preStart()
   }
@@ -58,7 +56,7 @@ abstract class RedisWorkerIO(val address: InetSocketAddress, onConnectStatus: Bo
     readyToWrite = true
   }
 
-  def receive = connecting orElse writing
+  def receive: Receive = connecting orElse writing
 
   def connecting: Receive = {
     case a: InetSocketAddress => onAddressChanged(a)
@@ -68,7 +66,7 @@ abstract class RedisWorkerIO(val address: InetSocketAddress, onConnectStatus: Bo
     case c: ConnectionClosed => onClosingConnectionClosed() // not the current opening connection
   }
 
-  def onConnected(cmd: Connected) = {
+  def onConnected(cmd: Connected): Unit = {
     sender() ! Register(self)
     tcpWorker = sender()
     initConnectedBuffer()
@@ -78,7 +76,7 @@ abstract class RedisWorkerIO(val address: InetSocketAddress, onConnectStatus: Bo
     onConnectStatus(true)
   }
 
-  def onConnectingCommandFailed(cmdFailed: CommandFailed) = {
+  def onConnectingCommandFailed(cmdFailed: CommandFailed): Unit = {
     log.error(cmdFailed.toString)
     scheduleReconnect()
   }
@@ -110,7 +108,7 @@ abstract class RedisWorkerIO(val address: InetSocketAddress, onConnectStatus: Bo
     scheduleReconnect()
   }
 
-  def onConnectionClosed(c: ConnectionClosed) = {
+  def onConnectionClosed(c: ConnectionClosed): Unit = {
     log.warning(s"ConnectionClosed $c")
     scheduleReconnect()
   }
@@ -118,7 +116,7 @@ abstract class RedisWorkerIO(val address: InetSocketAddress, onConnectStatus: Bo
   /** O/S buffer was full
     * Maybe to much data in the Command ?
     */
-  def onConnectedCommandFailed(commandFailed: CommandFailed) = {
+  def onConnectedCommandFailed(commandFailed: CommandFailed): Unit = {
     log.error(commandFailed.toString) // O/S buffer was full
     tcpWorker ! commandFailed.cmd
   }
@@ -149,7 +147,7 @@ abstract class RedisWorkerIO(val address: InetSocketAddress, onConnectStatus: Bo
 
   def onWriteSent(): Unit
 
-  def restartConnection() = reconnect()
+  def restartConnection(): Unit = reconnect()
 
   def onConnectWrite(): ByteString
 
@@ -190,7 +188,3 @@ abstract class RedisWorkerIO(val address: InetSocketAddress, onConnectStatus: Bo
   }
 
 }
-
-object WriteAck extends Event
-
-object Reconnect

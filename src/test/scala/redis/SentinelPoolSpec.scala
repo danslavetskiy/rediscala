@@ -1,8 +1,8 @@
 package redis
 
 import redis.RedisServerHelper.redisHost
-import scala.concurrent._
-import scala.concurrent.duration._
+import scala.concurrent.*
+import scala.concurrent.duration.*
 
 class SentinelMutablePoolSpec extends RedisSentinelClients("SentinelMutablePoolSpec") {
 
@@ -49,7 +49,7 @@ class SentinelMutablePoolSpec extends RedisSentinelClients("SentinelMutablePoolS
 class SentinelMonitoredRedisClientMasterSlavesSpec extends RedisSentinelClients("SentinelMonitoredRedisClientMasterSlavesSpec") {
 
   lazy val redisMasterSlavesPool =
-    SentinelMonitoredRedisClientMasterSlaves(master = masterName, sentinels = sentinelPorts.map((redisHost, _)))
+    SentinelMonitoredRedisClientMasterSlaves(sentinels = sentinelPorts.map((redisHost, _)), master = masterName)
   "sentinel slave pool" should {
     "add and remove" in {
       Thread.sleep(10000)

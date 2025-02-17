@@ -1,11 +1,11 @@
 package redis.commands
 
-import redis.api._
-import redis.api.sortedsets._
 import redis.ByteStringDeserializer
 import redis.ByteStringSerializer
 import redis.Cursor
 import redis.Request
+import redis.api.*
+import redis.api.sortedsets.*
 import scala.concurrent.Future
 
 trait SortedSets extends Request {
@@ -106,7 +106,7 @@ trait SortedSets extends Request {
     min: Option[String],
     limit: Option[(Long, Long)] = None
   ): Future[Seq[R]] =
-    send(Zrevrangebylex(key, max.getOrElse("+"), max.getOrElse("-"), limit))
+    send(Zrevrangebylex(key, max.getOrElse("+"), min.getOrElse("-"), limit))
 
   def zscan[R: ByteStringDeserializer](
     key: String,

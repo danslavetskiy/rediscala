@@ -1,11 +1,11 @@
 package redis.commands
 
-import redis.Cursor
 import redis.ByteStringDeserializer
 import redis.ByteStringSerializer
+import redis.Cursor
 import redis.Request
+import redis.api.sets.*
 import scala.concurrent.Future
-import redis.api.sets._
 
 trait Sets extends Request {
 

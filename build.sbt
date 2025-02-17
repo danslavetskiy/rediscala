@@ -1,9 +1,9 @@
+import com.typesafe.tools.mima.core.DirectMissingMethodProblem
+import com.typesafe.tools.mima.core.ProblemFilters
+import com.typesafe.tools.mima.core.ReversedMissingMethodProblem
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 
 releaseTagName := (ThisBuild / version).value
-
-val pekko = ActorLibCross("-pekko", "-pekko")
-val akka = ActorLibCross("-akka", "-akka")
 
 releaseProcess := Seq[ReleaseStep](
   checkSnapshotDependencies,
@@ -23,13 +23,16 @@ ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 
 val baseSourceUrl = "https://github.com/rediscala/rediscala/tree/"
 
-def scalaVersions = Seq("2.12.18", "2.13.12", "3.3.1")
+def Scala213 = "2.13.16"
+
+def scalaVersions = Seq(Scala213, "3.3.5")
 
 lazy val commonSettings = Def.settings(
   organization := "io.github.rediscala",
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
   homepage := Some(url("https://github.com/rediscala/rediscala")),
   scmInfo := Some(ScmInfo(url("https://github.com/rediscala/rediscala"), "scm:git:git@github.com:rediscala/rediscala.git")),
+  mimaPreviousArtifacts := Set(organization.value %% name.value % "1.17.0"),
   pomExtra := (
     <developers>
       <developer>
@@ -51,15 +54,25 @@ lazy val standardSettings = Def.settings(
   Test / baseDirectory := (LocalRootProject / baseDirectory).value,
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   scalacOptions ++= Seq(
+    "-release:8",
+    "-Wunused:imports",
     "-encoding",
     "UTF-8",
     "-deprecation",
     "-feature",
     "-unchecked"
   ),
+  scalacOptions ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13)) =>
+        Seq("-Xsource:3-cross")
+      case _ =>
+        Nil
+    }
+  },
   scalacOptions ++= PartialFunction
     .condOpt(CrossVersion.partialVersion(scalaVersion.value)) { case Some((2, _)) =>
-      Seq("-Xlint", "-Xsource:3")
+      Seq("-Xlint")
     }
     .toList
     .flatten,
@@ -71,25 +84,6 @@ lazy val standardSettings = Def.settings(
   },
   autoAPIMappings := true,
   Test / fork := true,
-  TaskKey[Unit]("runDockerTests") := Def.taskDyn {
-    val dockerTests = (Test / compile).value
-      .asInstanceOf[sbt.internal.inc.Analysis]
-      .apis
-      .internal
-      .collect {
-        case (className, analyzed) if analyzed.api.classApi.structure.parents.collect { case p: xsbti.api.Projection =>
-              p.id
-            }.exists(Set("RedisDockerServer")) =>
-          className
-      }
-      .toList
-      .sorted
-    assert(dockerTests.nonEmpty)
-    streams.value.log.info(dockerTests.mkString("testOnly ", ", ", ""))
-    Def.task {
-      (Test / testOnly).toTask(dockerTests.mkString(" ", " ", "")).value
-    }
-  }.value,
   Compile / doc / scalacOptions ++= {
     val branch = {
       if (isSnapshot.value) sys.process.Process("git rev-parse HEAD").lineStream_!.head
@@ -100,28 +94,14 @@ lazy val standardSettings = Def.settings(
       baseSourceUrl + branch + "€{FILE_PATH}.scala"
     )
   },
-  version := {
-    if (baseDirectory.value == (LocalRootProject / baseDirectory).value) {
-      version.value
-    } else {
-      val v = version.value
-      val snapshotSuffix = "-SNAPSHOT"
-      val axes = virtualAxes.?.value.getOrElse(Nil)
-      val suffix = (axes.contains(pekko), axes.contains(akka)) match {
-        case (true, false) =>
-          "-pekko"
-        case (false, true) =>
-          "-akka"
-        case _ =>
-          sys.error(axes.toString)
-      }
-      if (v.endsWith(snapshotSuffix)) {
-        v.dropRight(snapshotSuffix.length) + suffix + snapshotSuffix
-      } else {
-        v + suffix
-      }
-    }
-  },
+  libraryDependencies ++= Seq(
+    "redis.clients" % "jedis" % "5.2.0" % Test,
+    "com.dimafeng" %% "testcontainers-scala" % "0.41.8" % Test,
+    "org.scalatest" %% "scalatest-wordspec" % "3.2.19" % Test,
+    "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
+    "org.apache.pekko" %% "pekko-actor" % "1.1.3",
+    "org.apache.pekko" %% "pekko-testkit" % "1.1.3" % Test,
+  )
 )
 
 lazy val rediscala = projectMatrix
@@ -129,48 +109,38 @@ lazy val rediscala = projectMatrix
   .in(file("."))
   .settings(
     standardSettings,
-    libraryDependencies ++= {
-      if (scalaBinaryVersion.value == "2.12") {
-        Seq(
-          "org.scala-lang.modules" %% "scala-collection-compat" % "2.11.0" % Test,
-        )
-      } else {
-        Nil
+    TaskKey[Unit]("runDockerTests") := Def.taskDyn {
+      val dockerTests = (Test / compile).value
+        .asInstanceOf[sbt.internal.inc.Analysis]
+        .apis
+        .internal
+        .collect {
+          case (className, analyzed) if analyzed.api.classApi.structure.parents.collect { case p: xsbti.api.Projection =>
+                p.id
+              }.exists(Set("RedisDockerServer")) =>
+            className
+        }
+        .toList
+        .sorted
+      assert(dockerTests.nonEmpty)
+      streams.value.log.info(dockerTests.mkString("testOnly ", ", ", ""))
+      Def.task {
+        (Test / testOnly).toTask(dockerTests.mkString(" ", " ", "")).value
       }
-    },
-    libraryDependencies ++= Seq(
-      "com.dimafeng" %% "testcontainers-scala" % "0.41.0" % Test,
-      "org.scalatest" %% "scalatest-wordspec" % "3.2.17" % Test,
-      "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
-    )
+    }.value,
   )
   .jvmPlatform(
     scalaVersions = scalaVersions,
-    axisValues = Seq(pekko),
-    settings = Def.settings(
-      Compile / unmanagedResourceDirectories += {
-        (Compile / scalaSource).value.getParentFile / "resources-pekko"
-      },
-      libraryDependencies ++= Seq(
-        "org.apache.pekko" %% "pekko-actor" % "1.0.1",
-        "org.apache.pekko" %% "pekko-testkit" % "1.0.1" % Test,
-      )
-    ),
-  )
-  .jvmPlatform(
-    scalaVersions = scalaVersions,
-    axisValues = Seq(akka),
-    settings = Def.settings(
-      Compile / unmanagedResourceDirectories += {
-        (Compile / scalaSource).value.getParentFile / "resources-akka"
-      },
-      libraryDependencies ++= Seq(
-        "com.typesafe.akka" %% "akka-actor" % "2.6.21",
-        "com.typesafe.akka" %% "akka-testkit" % "2.6.21" % Test,
-      )
-    ),
   )
 
+standardSettings
 Compile / sources := Nil
 Test / sources := Nil
 publish / skip := true
+scalaVersion := Scala213
+
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
+scalafixAll := {}
+mimaPreviousArtifacts := Set.empty
+ThisBuild / scalafixDependencies += "com.github.xuwei-k" %% "scalafix-rules" % "0.6.0"

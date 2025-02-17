@@ -1,27 +1,12 @@
 package redis.actors
 
+import java.net.InetSocketAddress
 import redis.RediscalaCompat.util.ByteString
+import redis.api.connection.Auth
+import redis.api.pubsub.*
 import redis.protocol.Error
 import redis.protocol.MultiBulk
 import redis.protocol.RedisReply
-import redis.api.pubsub._
-import java.net.InetSocketAddress
-import redis.api.connection.Auth
-
-class RedisSubscriberActorWithCallback(
-  address: InetSocketAddress,
-  channels: Seq[String],
-  patterns: Seq[String],
-  messageCallback: Message => Unit,
-  pmessageCallback: PMessage => Unit,
-  authUsername: Option[String] = None,
-  authPassword: Option[String] = None,
-  onConnectStatus: Boolean => Unit
-) extends RedisSubscriberActor(address, channels, patterns, authUsername, authPassword, onConnectStatus) {
-  def onMessage(m: Message) = messageCallback(m)
-
-  def onPMessage(pm: PMessage) = pmessageCallback(pm)
-}
 
 abstract class RedisSubscriberActor(
   address: InetSocketAddress,
@@ -47,16 +32,16 @@ abstract class RedisSubscriberActor(
   /**
    * Keep states of channels and actor in case of connection reset
    */
-  var channelsSubscribed = channels.toSet
-  var patternsSubscribed = patterns.toSet
+  private[redis] var channelsSubscribed = channels.toSet
+  private var patternsSubscribed = patterns.toSet
 
   override def preStart(): Unit = {
     super.preStart()
     if (channelsSubscribed.nonEmpty) {
-      write(SUBSCRIBE(channelsSubscribed.toSeq: _*).toByteString)
+      write(SUBSCRIBE(channelsSubscribed.toSeq*).toByteString)
     }
     if (patternsSubscribed.nonEmpty) {
-      write(PSUBSCRIBE(patternsSubscribed.toSeq: _*).toByteString)
+      write(PSUBSCRIBE(patternsSubscribed.toSeq*).toByteString)
     }
   }
 
@@ -73,19 +58,19 @@ abstract class RedisSubscriberActor(
   }
 
   def subscribe(channels: String*): Unit = {
-    self ! SUBSCRIBE(channels: _*)
+    self ! SUBSCRIBE(channels*)
   }
 
   def unsubscribe(channels: String*): Unit = {
-    self ! UNSUBSCRIBE(channels: _*)
+    self ! UNSUBSCRIBE(channels*)
   }
 
   def psubscribe(patterns: String*): Unit = {
-    self ! PSUBSCRIBE(patterns: _*)
+    self ! PSUBSCRIBE(patterns*)
   }
 
   def punsubscribe(patterns: String*): Unit = {
-    self ! PUNSUBSCRIBE(patterns: _*)
+    self ! PUNSUBSCRIBE(patterns*)
   }
 
   def onConnectionClosed(): Unit = {}

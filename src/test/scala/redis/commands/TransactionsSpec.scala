@@ -1,12 +1,12 @@
 package redis.commands
 
-import redis._
-import scala.concurrent.Await
+import redis.*
 import redis.RediscalaCompat.util.ByteString
 import redis.actors.ReplyErrorException
 import redis.protocol.Bulk
-import redis.protocol.Status
 import redis.protocol.MultiBulk
+import redis.protocol.Status
+import scala.concurrent.Await
 
 class TransactionsSpec extends RedisDockerServer {
 

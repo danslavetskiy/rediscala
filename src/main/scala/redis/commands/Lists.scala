@@ -3,11 +3,12 @@ package redis.commands
 import redis.ByteStringDeserializer
 import redis.ByteStringSerializer
 import redis.Request
-import scala.concurrent.Future
-import redis.api.lists._
 import redis.api.AFTER
 import redis.api.BEFORE
+import redis.api.ListDirection
 import redis.api.ListPivot
+import redis.api.lists.*
+import scala.concurrent.Future
 
 trait Lists extends Request {
 
@@ -52,6 +53,9 @@ trait Lists extends Request {
 
   def rpoplpush[R: ByteStringDeserializer](source: String, destination: String): Future[Option[R]] =
     send(Rpoplpush(source, destination))
+
+  def lmove[R: ByteStringDeserializer](source: String, destination: String, from: ListDirection, to: ListDirection): Future[Option[R]] =
+    send(Lmove(source, destination, from, to))
 
   def rpush[V: ByteStringSerializer](key: String, values: V*): Future[Long] =
     send(Rpush(key, values))

@@ -1,10 +1,10 @@
 package redis.protocol
 
+import redis.MultiBulkConverter
 import redis.RediscalaCompat.util.ByteString
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.util.Try
-import redis.MultiBulkConverter
 
 sealed trait RedisReply extends Product with Serializable {
   def toByteString: ByteString
@@ -23,7 +23,7 @@ case class Status(status: ByteString) extends RedisReply {
 }
 
 object Status {
-  val okByteString = ByteString("OK")
+  val okByteString: ByteString = ByteString("OK")
 }
 
 case class Error(error: ByteString) extends RedisReply {
@@ -39,7 +39,7 @@ case class Integer(i: ByteString) extends RedisReply {
 
   def toInt: Int = ParseNumber.parseInt(i)
 
-  def toBoolean = i == Integer.trueByteString
+  def toBoolean: Boolean = i == Integer.trueByteString
 
   override def toString = i.utf8String
 
@@ -49,12 +49,12 @@ case class Integer(i: ByteString) extends RedisReply {
 }
 
 object Integer {
-  val trueByteString = ByteString("1")
+  val trueByteString: ByteString = ByteString("1")
 }
 
 case class Bulk(response: Option[ByteString]) extends RedisReply {
   // looks wrong
-  override def toString = response.map(_.utf8String).get
+  override def toString: String = response.map(_.utf8String).get
 
   def toByteString: ByteString = response.get
 
@@ -70,51 +70,13 @@ case class MultiBulk(responses: Option[Vector[RedisReply]]) extends RedisReply {
 
   def asTry[A](implicit convert: MultiBulkConverter[A]): Try[A] = convert.to(this)
 
-  def asOpt[A](implicit convert: MultiBulkConverter[A]): Option[A] = asTry(convert).toOption
+  def asOpt[A](implicit convert: MultiBulkConverter[A]): Option[A] = asTry(using convert).toOption
 }
 
 case class PartialMultiBulk(i: Int, acc: mutable.Buffer[RedisReply]) extends RedisReply {
   override def toByteString: ByteString = throw new NoSuchElementException()
 
   override def asOptByteString: Option[ByteString] = throw new NoSuchElementException()
-}
-
-sealed trait DecodeResult[+A] {
-  def rest: ByteString
-
-  def isFullyDecoded: Boolean
-
-  def foreach[B](f: A => Unit): DecodeResult[Unit] = this match {
-    case p @ PartiallyDecoded(_, _) => PartiallyDecoded(ByteString(), bs => p.f(p.rest ++ bs).foreach(f))
-    case fd @ FullyDecoded(_, _) => FullyDecoded(f(fd.result), fd.rest)
-  }
-
-  def map[B](f: A => B): DecodeResult[B] = this match {
-    case p @ PartiallyDecoded(_, _) => PartiallyDecoded(ByteString(), bs => p.f(p.rest ++ bs).map(f))
-    case fd @ FullyDecoded(_, _) => FullyDecoded(f(fd.result), fd.rest)
-  }
-
-  def flatMap[B](f: (A, ByteString) => DecodeResult[B]): DecodeResult[B] = this match {
-    case p @ PartiallyDecoded(_, _) => PartiallyDecoded(ByteString(), bs => p.f(p.rest ++ bs).flatMap(f))
-    case fd @ FullyDecoded(_, _) => f(fd.result, fd.rest)
-  }
-
-  def run(next: ByteString): DecodeResult[A] = this match {
-    case p @ PartiallyDecoded(_, _) => p.f(p.rest ++ next)
-    case fd @ FullyDecoded(_, _) => FullyDecoded(fd.result, fd.rest ++ next)
-  }
-}
-
-case class PartiallyDecoded[A](rest: ByteString, f: ByteString => DecodeResult[A]) extends DecodeResult[A] {
-  override def isFullyDecoded: Boolean = false
-}
-
-case class FullyDecoded[A](result: A, rest: ByteString) extends DecodeResult[A] {
-  override def isFullyDecoded: Boolean = true
-}
-
-object DecodeResult {
-  val unit: DecodeResult[Unit] = FullyDecoded((), ByteString.empty)
 }
 
 object RedisProtocolReply {
@@ -124,7 +86,7 @@ object RedisProtocolReply {
   val BULK = '$'
   val MULTIBULK = '*'
 
-  val LS = "\r\n".getBytes("UTF-8")
+  val LS: Array[Byte] = "\r\n".getBytes("UTF-8")
 
   def decodeReply(bs: ByteString): DecodeResult[RedisReply] = {
     if (bs.isEmpty) {

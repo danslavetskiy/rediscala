@@ -1,11 +1,11 @@
 package redis.commands
 
-import redis._
-import scala.concurrent.Future
-import scala.concurrent.duration._
-import redis.api.Order
+import redis.*
 import redis.api.LimitOffsetCount
-import redis.api.keys._
+import redis.api.Order
+import redis.api.keys.*
+import scala.concurrent.Future
+import scala.concurrent.duration.*
 
 trait Keys extends Request {
 

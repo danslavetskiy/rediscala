@@ -1,16 +1,14 @@
 package redis
 
-import scala.concurrent.Promise
+import redis.RediscalaCompat.util.ByteString
 import redis.protocol.DecodeResult
 import redis.protocol.RedisReply
-import redis.RediscalaCompat.util.ByteString
+import scala.concurrent.Promise
 
 case class Operation[RedisReplyT <: RedisReply, T](redisCommand: RedisCommand[RedisReplyT, T], promise: Promise[T]) {
   def decodeRedisReplyThenComplete(bs: ByteString): DecodeResult[Unit] = {
     val r = redisCommand.decodeRedisReply.apply(bs)
-    r.foreach { reply =>
-      completeSuccess(reply)
-    }
+    r.foreach { completeSuccess }
   }
 
   def completeSuccess(redisReply: RedisReplyT): Promise[T] = {
@@ -18,14 +16,12 @@ case class Operation[RedisReplyT <: RedisReply, T](redisCommand: RedisCommand[Re
     promise.success(v)
   }
 
-  def tryCompleteSuccess(redisReply: RedisReply) = {
+  def tryCompleteSuccess(redisReply: RedisReply): Boolean = {
     val v = redisCommand.decodeReply(redisReply.asInstanceOf[RedisReplyT])
     promise.trySuccess(v)
   }
 
-  def completeSuccessValue(value: T) = promise.success(value)
+  def completeSuccessValue(value: T): Promise[T] = promise.success(value)
 
-  def completeFailed(t: Throwable) = promise.failure(t)
+  def completeFailed(t: Throwable): Promise[T] = promise.failure(t)
 }
-
-case class Transaction(commands: Seq[Operation[_, _]])

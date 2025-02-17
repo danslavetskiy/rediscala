@@ -1,20 +1,20 @@
 package redis.actors
 
-import redis.RediscalaCompat.actor._
+import com.typesafe.config.ConfigFactory
+import java.net.InetSocketAddress
 import org.scalatest.wordspec.AnyWordSpecLike
+import redis.Operation
+import redis.Redis
+import redis.RediscalaCompat.actor.*
 import redis.RediscalaCompat.util.ByteString
+import redis.RediscalaTestCompat
+import redis.RediscalaTestCompat.testkit.*
+import redis.api.connection.Ping
 import redis.api.hashes.Hgetall
 import redis.protocol.MultiBulk
+import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.Promise
-import scala.collection.mutable
-import java.net.InetSocketAddress
-import com.typesafe.config.ConfigFactory
-import redis.Redis
-import redis.Operation
-import redis.api.connection.Ping
-import redis.RediscalaTestCompat
-import redis.RediscalaTestCompat.testkit._
 
 class RedisReplyDecoderSpec
     extends TestKit(
@@ -23,7 +23,7 @@ class RedisReplyDecoderSpec
     with AnyWordSpecLike
     with ImplicitSender {
 
-  import scala.concurrent.duration._
+  import scala.concurrent.duration.*
 
   val timeout = 5.seconds.dilated
 
@@ -31,7 +31,7 @@ class RedisReplyDecoderSpec
     "ok" in within(timeout) {
       val promise = Promise[String]()
       val operation = Operation(Ping, promise)
-      val q = QueuePromises(mutable.Queue[Operation[_, _]]())
+      val q = QueuePromises(mutable.Queue[Operation[?, ?]]())
       q.queue.enqueue(operation)
 
       val redisReplyDecoder = TestActorRef[RedisReplyDecoder](Props(classOf[RedisReplyDecoder]).withDispatcher(Redis.dispatcher.name))
@@ -50,7 +50,7 @@ class RedisReplyDecoderSpec
       val promise3 = Promise[String]()
       val op2 = Operation(Ping, promise2)
       val op3 = Operation(Ping, promise3)
-      val q2 = QueuePromises(mutable.Queue[Operation[_, _]]())
+      val q2 = QueuePromises(mutable.Queue[Operation[?, ?]]())
       q2.queue.enqueue(op2)
       q2.queue.enqueue(op3)
 
@@ -110,7 +110,7 @@ class RedisReplyDecoderSpec
       val operation1 = Operation(Ping, promise1)
       val operation2 = Operation(Ping, promise2)
       val operation3 = Operation[MultiBulk, Map[String, String]](Hgetall[String, String]("key"), promise3)
-      val q = QueuePromises(mutable.Queue[Operation[_, _]]())
+      val q = QueuePromises(mutable.Queue[Operation[?, ?]]())
       q.queue.enqueue(operation1)
       q.queue.enqueue(operation2)
       q.queue.enqueue(operation3)

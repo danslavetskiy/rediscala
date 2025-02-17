@@ -1,12 +1,16 @@
-addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.9.1")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.0")
 
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.21")
+addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.10.1")
 
-addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.2.1")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.4")
 
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.12.2")
 
-addSbtPlugin("com.github.sbt" % "sbt-release" % "1.1.0")
+addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.3.1")
+
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.4")
+
+addSbtPlugin("com.github.sbt" % "sbt-release" % "1.4.0")
 
 if (sys.env.isDefinedAt("GITHUB_ACTION")) {
   Def.settings(

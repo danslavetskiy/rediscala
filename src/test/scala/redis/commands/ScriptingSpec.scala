@@ -1,16 +1,16 @@
 package redis.commands
 
 import java.io.File
-import redis._
-import scala.concurrent.Await
-import redis.RediscalaCompat.util.ByteString
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.SpanSugar._
-import redis.protocol.Bulk
-import redis.protocol.MultiBulk
+import org.scalatest.time.SpanSugar.*
+import redis.*
+import redis.RediscalaCompat.util.ByteString
 import redis.actors.ReplyErrorException
 import redis.api.scripting.RedisScript
+import redis.protocol.Bulk
+import redis.protocol.MultiBulk
+import scala.concurrent.Await
 
 class ScriptingSpec extends RedisDockerServer with ScalaFutures {
 
@@ -92,11 +92,9 @@ class ScriptingSpec extends RedisDockerServer with ScalaFutures {
           """.stripMargin)
         Thread.sleep(1000)
         assert(redisKiller.scriptKill().futureValue(Timeout(30.seconds)))
-        assert(
-          intercept[ReplyErrorException](Await.result(infiniteScript, timeOut)) == ReplyErrorException(
-            "ERR Error running script (call to f_2817d960235dc23d2cea9cc2c716a0b123b56be8): @user_script:3: Script killed by user with SCRIPT KILL..."
-          )
-        )
+        val actual = intercept[ReplyErrorException](Await.result(infiniteScript, timeOut))
+        assert(actual.message.contains("Script killed by user with SCRIPT KILL"), actual)
+        assert(actual.message.contains("2817d960235dc23d2cea9cc2c716a0b123b56be8"), actual)
       })
     }
 

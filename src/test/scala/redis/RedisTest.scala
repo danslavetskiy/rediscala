@@ -1,8 +1,8 @@
 package redis
 
 import redis.RediscalaCompat.ConfigurationException
-import scala.concurrent._
 import redis.RediscalaCompat.util.ByteString
+import scala.concurrent.*
 
 class RedisTest extends RedisDockerServer {
 
