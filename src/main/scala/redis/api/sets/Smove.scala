@@ -1,9 +1,9 @@
 package redis.api.sets
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 
-case class Smove[KS, KD, V](source: KS, destination: KD, member: V)(implicit
+case class Smove[KS, KD, V](source: KS, destination: KD, member: V)(using
   redisSource: ByteStringSerializer[KS],
   redisDest: ByteStringSerializer[KD],
   convert: ByteStringSerializer[V]

@@ -1,9 +1,9 @@
 package redis.api.strings
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 
-case class Setbit[K](key: K, offset: Long, value: Boolean)(implicit redisKey: ByteStringSerializer[K])
+case class Setbit[K](key: K, offset: Long, value: Boolean)(using ByteStringSerializer[K])
     extends SimpleClusterKey[K]
     with RedisCommandIntegerBoolean {
   def isMasterOnly = true

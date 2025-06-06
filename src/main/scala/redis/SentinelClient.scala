@@ -1,10 +1,10 @@
 package redis
 
 import java.net.InetSocketAddress
-import redis.RediscalaCompat.actor.ActorRef
-import redis.RediscalaCompat.actor.ActorSystem
-import redis.RediscalaCompat.actor.Props
-import redis.RediscalaCompat.event.Logging
+import org.apache.pekko.actor.ActorRef
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.actor.Props
+import org.apache.pekko.event.Logging
 import redis.actors.RedisSubscriberActorWithCallback
 import redis.api.pubsub.Message
 import redis.api.pubsub.PMessage
@@ -18,7 +18,7 @@ case class SentinelClient(
   onNewSlave: (String, String, Int) => Unit = (masterName: String, sentinelip: String, sentinelport: Int) => {},
   onSlaveDown: (String, String, Int) => Unit = (masterName: String, sentinelip: String, sentinelport: Int) => {},
   name: String = "SentinelClient"
-)(implicit _system: ActorSystem, redisDispatcher: RedisDispatcher = Redis.dispatcher)
+)(using _system: ActorSystem, redisDispatcher: RedisDispatcher = Redis.dispatcher)
     extends RedisClientActorLike(_system, redisDispatcher)
     with SentinelCommands {
   val system: ActorSystem = _system

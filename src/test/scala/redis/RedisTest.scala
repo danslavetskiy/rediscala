@@ -1,7 +1,7 @@
 package redis
 
-import redis.RediscalaCompat.ConfigurationException
-import redis.RediscalaCompat.util.ByteString
+import org.apache.pekko.ConfigurationException
+import org.apache.pekko.util.ByteString
 import scala.concurrent.*
 
 class RedisTest extends RedisDockerServer {
@@ -41,7 +41,7 @@ class RedisTest extends RedisDockerServer {
     }
     "use custom dispatcher" in {
       def test() = withRedisServer(port => {
-        implicit val redisDispatcher = RedisDispatcher("no-this-dispatcher")
+        given RedisDispatcher = RedisDispatcher("no-this-dispatcher")
         RedisClient(port = port)
       })
       assertThrows[ConfigurationException] { test() }

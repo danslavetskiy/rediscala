@@ -1,9 +1,9 @@
 package redis.api.keys
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 
-case class Unlink[K](keys: Seq[K])(implicit redisKey: ByteStringSerializer[K]) extends MultiClusterKey[K] with RedisCommandIntegerLong {
+case class Unlink[K](keys: Seq[K])(using redisKey: ByteStringSerializer[K]) extends MultiClusterKey[K] with RedisCommandIntegerLong {
   def isMasterOnly = true
   val encodedRequest: ByteString = encode("UNLINK", keys.map(redisKey.serialize))
 }

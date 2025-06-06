@@ -1,11 +1,11 @@
 package redis.api.geo
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 import redis.api.geo.DistUnits.Measurement
 import redis.protocol.*
 
-case class GeoDist[K](key: K, member1: String, member2: String, unit: Measurement)(implicit redisKey: ByteStringSerializer[K])
+case class GeoDist[K](key: K, member1: String, member2: String, unit: Measurement)(using redisKey: ByteStringSerializer[K])
     extends SimpleClusterKey[K]
     with RedisCommandBulkDouble {
   def isMasterOnly = false

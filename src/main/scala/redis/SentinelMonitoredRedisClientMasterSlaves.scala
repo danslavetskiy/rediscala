@@ -1,12 +1,12 @@
 package redis
 
-import redis.RediscalaCompat.actor.ActorRef
-import redis.RediscalaCompat.actor.ActorSystem
+import org.apache.pekko.actor.ActorRef
+import org.apache.pekko.actor.ActorSystem
 import redis.commands.Transactions
 import redis.protocol.RedisReply
 import scala.concurrent.Future
 
-case class SentinelMonitoredRedisClientMasterSlaves(sentinels: Seq[(String, Int)] = Seq(("localhost", 26379)), master: String)(implicit
+case class SentinelMonitoredRedisClientMasterSlaves(sentinels: Seq[(String, Int)] = Seq(("localhost", 26379)), master: String)(using
   _system: ActorSystem,
   redisDispatcher: RedisDispatcher = Redis.dispatcher
 ) extends SentinelMonitored(_system, redisDispatcher)

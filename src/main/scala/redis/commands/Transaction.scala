@@ -1,8 +1,8 @@
 package redis.commands
 
+import org.apache.pekko.actor.*
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.actor.*
-import redis.RediscalaCompat.util.ByteString
 import redis.actors.ReplyErrorException
 import redis.api.transactions.Exec
 import redis.api.transactions.Multi
@@ -15,7 +15,7 @@ import scala.concurrent.Promise
 import scala.util.Failure
 import scala.util.Success
 
-case class Transaction(watcher: Set[String], operations: Queue[Operation[?, ?]], redisConnection: ActorRef)(implicit
+case class Transaction(watcher: Set[String], operations: Queue[Operation[?, ?]], redisConnection: ActorRef)(using
   val executionContext: ExecutionContext
 ) {
 

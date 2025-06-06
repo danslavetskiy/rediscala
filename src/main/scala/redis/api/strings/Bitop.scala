@@ -1,10 +1,10 @@
 package redis.api.strings
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 import redis.api.BitOperator
 
-case class Bitop[K, KK](operation: BitOperator, destkey: K, keys: Seq[KK])(implicit
+case class Bitop[K, KK](operation: BitOperator, destkey: K, keys: Seq[KK])(using
   redisKey: ByteStringSerializer[K],
   redisKeys: ByteStringSerializer[KK]
 ) extends RedisCommandIntegerLong {

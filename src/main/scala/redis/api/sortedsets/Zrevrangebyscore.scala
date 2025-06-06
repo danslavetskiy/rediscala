@@ -1,10 +1,10 @@
 package redis.api.sortedsets
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 import redis.api.Limit
 
-case class Zrevrangebyscore[K: ByteStringSerializer, R](key: K, min: Limit, max: Limit, limit: Option[(Long, Long)] = None)(implicit
+case class Zrevrangebyscore[K: ByteStringSerializer, R](key: K, min: Limit, max: Limit, limit: Option[(Long, Long)] = None)(using
   deserializerR: ByteStringDeserializer[R]
 ) extends SimpleClusterKey[K]
     with RedisCommandMultiBulkSeqByteString[R] {
@@ -14,8 +14,8 @@ case class Zrevrangebyscore[K: ByteStringSerializer, R](key: K, min: Limit, max:
 }
 
 private[redis] object Zrevrangebyscore {
-  def buildArgs[K](key: K, min: Limit, max: Limit, withscores: Boolean, limit: Option[(Long, Long)])(implicit
-    keySeria: ByteStringSerializer[K]
+  def buildArgs[K](key: K, min: Limit, max: Limit, withscores: Boolean, limit: Option[(Long, Long)])(using
+    ByteStringSerializer[K]
   ): Seq[ByteString] = {
     /*
      * Find the actual min/max and reverse them in order to support backwards compatibility and legacy clients.

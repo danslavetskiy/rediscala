@@ -1,9 +1,9 @@
 package redis.api.sets
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 
-case class Srandmembers[K, R](key: K, count: Long)(implicit redisKey: ByteStringSerializer[K], deserializerR: ByteStringDeserializer[R])
+case class Srandmembers[K, R](key: K, count: Long)(using redisKey: ByteStringSerializer[K], deserializerR: ByteStringDeserializer[R])
     extends SimpleClusterKey[K]
     with RedisCommandMultiBulkSeqByteString[R] {
   def isMasterOnly = false

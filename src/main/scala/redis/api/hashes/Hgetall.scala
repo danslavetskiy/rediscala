@@ -1,13 +1,13 @@
 package redis.api.hashes
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 import redis.protocol.MultiBulk
 import redis.protocol.RedisReply
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-case class Hgetall[K, R](key: K)(implicit redisKey: ByteStringSerializer[K], deserializerR: ByteStringDeserializer[R])
+case class Hgetall[K, R](key: K)(using redisKey: ByteStringSerializer[K], deserializerR: ByteStringDeserializer[R])
     extends SimpleClusterKey[K]
     with RedisCommandMultiBulk[Map[String, R]] {
   def isMasterOnly = false

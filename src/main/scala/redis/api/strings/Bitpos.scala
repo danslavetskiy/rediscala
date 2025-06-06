@@ -1,9 +1,9 @@
 package redis.api.strings
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 
-case class Bitpos[K](key: K, bit: Long, start: Long = 0, end: Long = -1)(implicit redisKey: ByteStringSerializer[K])
+case class Bitpos[K](key: K, bit: Long, start: Long = 0, end: Long = -1)(using ByteStringSerializer[K])
     extends SimpleClusterKey[K]
     with RedisCommandIntegerLong {
   def isMasterOnly = false

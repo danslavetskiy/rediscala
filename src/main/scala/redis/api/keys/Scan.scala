@@ -1,10 +1,10 @@
 package redis.api.keys
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 import redis.protocol.*
 
-case class Scan[C](cursor: C, count: Option[Int], matchGlob: Option[String])(implicit
+case class Scan[C](cursor: C, count: Option[Int], matchGlob: Option[String])(using
   redisCursor: ByteStringSerializer[C],
   deserializer: ByteStringDeserializer[String]
 ) extends RedisCommandMultiBulkCursor[Seq[String]] {

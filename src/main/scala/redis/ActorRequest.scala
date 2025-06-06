@@ -1,13 +1,13 @@
 package redis
 
-import redis.RediscalaCompat.actor.ActorRef
+import org.apache.pekko.actor.ActorRef
 import redis.protocol.RedisReply
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.Promise
 
 trait ActorRequest {
-  implicit val executionContext: ExecutionContext
+  given executionContext: ExecutionContext
 
   def redisConnection: ActorRef
 

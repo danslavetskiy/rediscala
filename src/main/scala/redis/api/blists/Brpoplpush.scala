@@ -1,13 +1,13 @@
 package redis.api.blists
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 import redis.protocol.Bulk
 import redis.protocol.RedisReply
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
 
-case class Brpoplpush[KS, KD, R](source: KS, destination: KD, timeout: FiniteDuration = Duration.Zero)(implicit
+case class Brpoplpush[KS, KD, R](source: KS, destination: KD, timeout: FiniteDuration = Duration.Zero)(using
   bsSource: ByteStringSerializer[KS],
   bsDest: ByteStringSerializer[KD],
   deserializerR: ByteStringDeserializer[R]

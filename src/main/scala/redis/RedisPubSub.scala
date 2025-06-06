@@ -1,7 +1,7 @@
 package redis
 
 import java.net.InetSocketAddress
-import redis.RediscalaCompat.actor.*
+import org.apache.pekko.actor.*
 import redis.actors.RedisSubscriberActorWithCallback
 import redis.api.pubsub.*
 
@@ -15,7 +15,7 @@ case class RedisPubSub(
   authUsername: Option[String] = None,
   authPassword: Option[String] = None,
   name: String = "RedisPubSub"
-)(implicit system: ActorRefFactory, redisDispatcher: RedisDispatcher = Redis.dispatcher) {
+)(using system: ActorRefFactory, redisDispatcher: RedisDispatcher = Redis.dispatcher) {
 
   val redisConnection: ActorRef = system.actorOf(
     Props(

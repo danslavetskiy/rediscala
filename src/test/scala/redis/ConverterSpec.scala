@@ -1,14 +1,14 @@
 package redis
 
+import org.apache.pekko.util.ByteString
 import org.scalatest.wordspec.AnyWordSpec
-import redis.RediscalaCompat.util.ByteString
 import redis.protocol.Bulk
 import redis.protocol.RedisReply
 
 case class DumbClass(s1: String, s2: String)
 
 object DumbClass {
-  implicit val byteStringFormatter: ByteStringFormatter[DumbClass] = new ByteStringFormatter[DumbClass] {
+  given byteStringFormatter: ByteStringFormatter[DumbClass] = new ByteStringFormatter[DumbClass] {
     def serialize(data: DumbClass): ByteString = {
       ByteString(data.s1 + "|" + data.s2)
     }
@@ -19,7 +19,7 @@ object DumbClass {
     }
   }
 
-  implicit val redisReplyDeserializer: RedisReplyDeserializer[DumbClass] = new RedisReplyDeserializer[DumbClass] {
+  given redisReplyDeserializer: RedisReplyDeserializer[DumbClass] = new RedisReplyDeserializer[DumbClass] {
     override def deserialize: PartialFunction[RedisReply, DumbClass] = { case Bulk(Some(bs)) =>
       byteStringFormatter.deserialize(bs)
     }
@@ -28,47 +28,45 @@ object DumbClass {
 
 class ConverterSpec extends AnyWordSpec {
 
-  import redis.ByteStringSerializer.*
-
   "ByteStringSerializer" should {
     "String" in {
-      assert(String.serialize("super string !") == ByteString("super string !"))
+      assert(implicitly[ByteStringSerializer[String]].serialize("super string !") == ByteString("super string !"))
     }
 
     "Short" in {
-      assert(ShortConverter.serialize(123) == ByteString("123"))
+      assert(implicitly[ByteStringSerializer[Short]].serialize(123) == ByteString("123"))
     }
 
     "Int" in {
-      assert(IntConverter.serialize(123) == ByteString("123"))
+      assert(implicitly[ByteStringSerializer[Int]].serialize(123) == ByteString("123"))
     }
 
     "Long" in {
-      assert(LongConverter.serialize(123) == ByteString("123"))
+      assert(implicitly[ByteStringSerializer[Long]].serialize(123) == ByteString("123"))
     }
 
     "Float" in {
-      assert(FloatConverter.serialize(123.123f) == ByteString("123.123"))
+      assert(implicitly[ByteStringSerializer[Float]].serialize(123.123f) == ByteString("123.123"))
     }
 
     "Double" in {
-      assert(DoubleConverter.serialize(123.123456) == ByteString("123.123456"))
+      assert(implicitly[ByteStringSerializer[Double]].serialize(123.123456) == ByteString("123.123456"))
     }
 
     "Char" in {
-      assert(CharConverter.serialize('a') == ByteString('a'))
+      assert(implicitly[ByteStringSerializer[Char]].serialize('a') == ByteString('a'))
     }
 
     "Byte" in {
-      assert(ByteConverter.serialize(123) == ByteString(123))
+      assert(implicitly[ByteStringSerializer[Byte]].serialize(123) == ByteString(123))
     }
 
     "ArrayByte" in {
-      assert(ArrayByteConverter.serialize(Array[Byte](1, 2, 3)) == ByteString(Array[Byte](1, 2, 3)))
+      assert(implicitly[ByteStringSerializer[Array[Byte]]].serialize(Array[Byte](1, 2, 3)) == ByteString(Array[Byte](1, 2, 3)))
     }
 
     "ByteString" in {
-      assert(ByteStringConverter.serialize(ByteString("stupid")) == ByteString("stupid"))
+      assert(implicitly[ByteStringSerializer[ByteString]].serialize(ByteString("stupid")) == ByteString("stupid"))
     }
   }
 

@@ -1,11 +1,11 @@
 package redis.api.geo
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 import redis.api.geo.DistUnits.Measurement
 import redis.protocol.*
 
-case class GeoRadius[K](key: K, lat: Double, lng: Double, radius: Double, unit: Measurement)(implicit redisKey: ByteStringSerializer[K])
+case class GeoRadius[K](key: K, lat: Double, lng: Double, radius: Double, unit: Measurement)(using redisKey: ByteStringSerializer[K])
     extends SimpleClusterKey[K]
     with RedisCommandMultiBulk[Seq[String]] {
   def isMasterOnly = false

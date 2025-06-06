@@ -1,9 +1,9 @@
 package redis.api.hashes
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 
-case class Hincrbyfloat[K, KK](key: K, fields: KK, increment: Double)(implicit
+case class Hincrbyfloat[K, KK](key: K, fields: KK, increment: Double)(using
   redisKey: ByteStringSerializer[K],
   redisFields: ByteStringSerializer[KK]
 ) extends SimpleClusterKey[K]

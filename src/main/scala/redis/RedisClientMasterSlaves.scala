@@ -1,18 +1,18 @@
 package redis
 
-import redis.RediscalaCompat.actor.ActorRef
-import redis.RediscalaCompat.actor.ActorSystem
+import org.apache.pekko.actor.ActorRef
+import org.apache.pekko.actor.ActorSystem
 import redis.commands.Transactions
 import redis.protocol.RedisReply
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-case class RedisClientMasterSlaves(master: RedisServer, slaves: Seq[RedisServer])(implicit
+case class RedisClientMasterSlaves(master: RedisServer, slaves: Seq[RedisServer])(using
   _system: ActorSystem,
   redisDispatcher: RedisDispatcher = Redis.dispatcher
 ) extends RedisCommands
     with Transactions {
-  implicit val executionContext: ExecutionContext = _system.dispatchers.lookup(redisDispatcher.name)
+  given executionContext: ExecutionContext = _system.dispatchers.lookup(redisDispatcher.name)
 
   val masterClient: RedisClient = RedisClient(master.host, master.port, master.username, master.password, master.db)
 

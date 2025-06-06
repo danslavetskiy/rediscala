@@ -3,8 +3,8 @@ package redis
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import redis.RediscalaCompat.actor.ActorRef
-import redis.RediscalaCompat.actor.ActorSystem
+import org.apache.pekko.actor.ActorRef
+import org.apache.pekko.actor.ActorSystem
 import redis.actors.RedisClientActor
 import redis.protocol.RedisReply
 import scala.concurrent.ExecutionContext
@@ -15,7 +15,7 @@ abstract class RedisClientPoolLike(system: ActorSystem, redisDispatcher: RedisDi
   def redisServerConnections: scala.collection.Map[RedisServer, RedisConnection]
 
   val name: String
-  implicit val executionContext: ExecutionContext = system.dispatchers.lookup(redisDispatcher.name)
+  given executionContext: ExecutionContext = system.dispatchers.lookup(redisDispatcher.name)
 
   private val redisConnectionRef: AtomicReference[Seq[ActorRef]] = new AtomicReference(Seq.empty)
 
@@ -66,7 +66,7 @@ abstract class RedisClientPoolLike(system: ActorSystem, redisDispatcher: RedisDi
   def getConnectOperations(server: RedisServer): () => Seq[Operation[?, ?]] = () => {
     val self = this
     val redis = new BufferedRequest with RedisCommands {
-      implicit val executionContext: ExecutionContext = self.executionContext
+      given executionContext: ExecutionContext = self.executionContext
     }
     onConnect(redis, server)
     redis.operations.result()

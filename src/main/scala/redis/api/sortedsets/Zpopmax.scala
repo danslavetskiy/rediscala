@@ -1,9 +1,9 @@
 package redis.api.sortedsets
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 
-case class Zpopmax[K, R](key: K, count: Long)(implicit
+case class Zpopmax[K, R](key: K, count: Long)(using
   keySeria: ByteStringSerializer[K],
   countSeria: ByteStringSerializer[Long],
   deserializerR: ByteStringDeserializer[R]

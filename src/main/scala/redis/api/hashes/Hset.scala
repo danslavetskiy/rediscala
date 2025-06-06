@@ -1,9 +1,9 @@
 package redis.api.hashes
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 
-case class Hset[K, KK, V](key: K, keysValues: Map[KK, V])(implicit
+case class Hset[K, KK, V](key: K, keysValues: Map[KK, V])(using
   redisKey: ByteStringSerializer[K],
   redisFields: ByteStringSerializer[KK],
   convert: ByteStringSerializer[V]

@@ -1,9 +1,9 @@
 package redis.api.geo
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 
-case class GeoAdd[K](key: K, lat: Double, lng: Double, loc: String)(implicit redisKey: ByteStringSerializer[K])
+case class GeoAdd[K](key: K, lat: Double, lng: Double, loc: String)(using redisKey: ByteStringSerializer[K])
     extends SimpleClusterKey[K]
     with RedisCommandIntegerLong {
   def isMasterOnly = false

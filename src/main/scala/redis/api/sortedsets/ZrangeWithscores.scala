@@ -1,9 +1,9 @@
 package redis.api.sortedsets
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 
-case class ZrangeWithscores[K, R](key: K, start: Long, stop: Long)(implicit
+case class ZrangeWithscores[K, R](key: K, start: Long, stop: Long)(using
   keySeria: ByteStringSerializer[K],
   deserializerR: ByteStringDeserializer[R]
 ) extends SimpleClusterKey[K]

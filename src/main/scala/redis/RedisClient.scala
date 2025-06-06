@@ -1,6 +1,6 @@
 package redis
 
-import redis.RediscalaCompat.actor.*
+import org.apache.pekko.actor.*
 import redis.commands.*
 import scala.concurrent.duration.FiniteDuration
 
@@ -12,7 +12,7 @@ case class RedisClient(
   override val db: Option[Int] = None,
   name: String = "RedisClient",
   connectTimeout: Option[FiniteDuration] = None
-)(implicit _system: ActorSystem, redisDispatcher: RedisDispatcher = Redis.dispatcher)
+)(using _system: ActorSystem, redisDispatcher: RedisDispatcher = Redis.dispatcher)
     extends RedisClientActorLike(_system, redisDispatcher, connectTimeout)
     with RedisCommands
     with Transactions {}

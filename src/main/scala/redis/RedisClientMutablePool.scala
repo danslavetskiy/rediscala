@@ -1,8 +1,8 @@
 package redis
 
-import redis.RediscalaCompat.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 
-case class RedisClientMutablePool(redisServers: Seq[RedisServer], name: String = "RedisClientPool")(implicit
+case class RedisClientMutablePool(redisServers: Seq[RedisServer], name: String = "RedisClientPool")(using
   system: ActorSystem,
   redisDispatcher: RedisDispatcher = Redis.dispatcher
 ) extends RedisClientPoolLike(system, redisDispatcher)

@@ -1,9 +1,9 @@
 package redis.api.sets
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 
-case class Sinter[K, KK, R](key: K, keys: Seq[KK])(implicit
+case class Sinter[K, KK, R](key: K, keys: Seq[KK])(using
   redisKey: ByteStringSerializer[K],
   redisKeys: ByteStringSerializer[KK],
   deserializerR: ByteStringDeserializer[R]

@@ -1,7 +1,7 @@
 package redis.api.keys
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 import redis.protocol.*
 import scala.concurrent.duration.FiniteDuration
 
@@ -14,7 +14,7 @@ case class Migrate[K](
   copy: Boolean = false,
   replace: Boolean = false,
   password: Option[String]
-)(implicit redisKey: ByteStringSerializer[K])
+)(using redisKey: ByteStringSerializer[K])
     extends RedisCommandStatusBoolean {
   def isMasterOnly = true
   val encodedRequest: ByteString = {

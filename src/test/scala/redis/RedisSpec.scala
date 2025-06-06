@@ -5,12 +5,12 @@ import java.io.OutputStream
 import java.net.Socket
 import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicInteger
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.testkit.TestKit
+import org.apache.pekko.util.Timeout
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpecLike
 import redis.RedisServerHelper.*
-import redis.RediscalaCompat.actor.ActorSystem
-import redis.RediscalaCompat.util.Timeout
-import redis.RediscalaTestCompat.testkit.TestKit
 import scala.concurrent.ExecutionContext
 import scala.io.Source
 import scala.jdk.CollectionConverters.*
@@ -44,9 +44,9 @@ abstract class RedisHelper extends TestKit(ActorSystem()) with AnyWordSpecLike w
 
   import scala.concurrent.duration.*
 
-  implicit val executionContext: ExecutionContext = system.dispatchers.lookup(Redis.dispatcher.name)
+  given executionContext: ExecutionContext = system.dispatchers.lookup(Redis.dispatcher.name)
 
-  implicit val timeout: Timeout = Timeout(10.seconds)
+  given timeout: Timeout = Timeout(10.seconds)
   val timeOut = 10.seconds
   val longTimeOut = 100.seconds
 

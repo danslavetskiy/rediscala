@@ -1,7 +1,7 @@
 package redis
 
-import redis.RediscalaCompat.actor.ActorSystem
-import redis.RediscalaCompat.event.Logging
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.event.Logging
 import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
@@ -14,7 +14,7 @@ abstract class SentinelMonitored(system: ActorSystem, redisDispatcher: RedisDisp
   val onNewSlave: (String, Int) => Unit
   val onSlaveDown: (String, Int) => Unit
 
-  implicit val executionContext: ExecutionContext = system.dispatchers.lookup(redisDispatcher.name)
+  given executionContext: ExecutionContext = system.dispatchers.lookup(redisDispatcher.name)
 
   val log = Logging.getLogger(system, this)
 
@@ -43,8 +43,8 @@ abstract class SentinelMonitored(system: ActorSystem, redisDispatcher: RedisDisp
   }
 
   def makeSentinelClient(host: String, port: Int): SentinelClient = {
-    SentinelClient(host, port, onSwitchMaster, onNewSentinel, onSentinelDown, internalOnNewSlave, internalOnSlaveDown, "SMSentinelClient")(
-      using system
+    SentinelClient(host, port, onSwitchMaster, onNewSentinel, onSentinelDown, internalOnNewSlave, internalOnSlaveDown, "SMSentinelClient")(using
+      system
     )
   }
 

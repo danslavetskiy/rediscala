@@ -1,9 +1,9 @@
 package redis.api.keys
 
+import org.apache.pekko.util.ByteString
 import redis.*
-import redis.RediscalaCompat.util.ByteString
 
-case class Rename[K, NK](key: K, newkey: NK)(implicit redisKey: ByteStringSerializer[K], newKeySer: ByteStringSerializer[NK])
+case class Rename[K, NK](key: K, newkey: NK)(using redisKey: ByteStringSerializer[K], newKeySer: ByteStringSerializer[NK])
     extends SimpleClusterKey[K]
     with RedisCommandStatusBoolean {
   def isMasterOnly = true
